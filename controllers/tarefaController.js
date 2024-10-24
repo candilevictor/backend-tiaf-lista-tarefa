@@ -1,8 +1,11 @@
 const db = require('../db/database');
 
+// Cria uma nova tarefa - Acesso para qualquer usuário autenticado
 exports.createTarefa = (req, res) => {
     const { tarefa } = req.body;
-    db.run("INSERT INTO tarefas (tarefa) VALUES (?)", [tarefa], function (err) {
+
+    // Insere a tarefa no banco de dados
+    db.run("INSERT INTO tarefas (tarefa) VALUES (?)", [tarefa], function(err) {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -10,6 +13,7 @@ exports.createTarefa = (req, res) => {
     });
 };
 
+// Obtém todas as tarefas - Acesso para qualquer usuário autenticado
 exports.getTarefas = (req, res) => {
     db.all("SELECT * FROM tarefas", [], (err, rows) => {
         if (err) {
@@ -19,8 +23,11 @@ exports.getTarefas = (req, res) => {
     });
 };
 
+// Obtém uma tarefa específica pelo ID - Acesso para qualquer usuário autenticado
 exports.getTarefaById = (req, res) => {
     const { id } = req.params;
+    
+    // Busca a tarefa pelo ID no banco de dados
     db.get("SELECT * FROM tarefas WHERE id = ?", [id], (err, row) => {
         if (err) {
             return res.status(500).json({ error: err.message });
@@ -33,10 +40,18 @@ exports.getTarefaById = (req, res) => {
     });
 };
 
+// Atualiza uma tarefa - Somente usuários com o papel 'admin' podem atualizar tarefas
 exports.updateTarefa = (req, res) => {
     const { id } = req.params;
     const { tarefa } = req.body;
-    db.run("UPDATE tarefas SET tarefa = ? WHERE id = ?", [tarefa, id], function (err) {
+
+    // Verifica se o usuário tem o papel de 'admin'
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem atualizar tarefas.' });
+    }
+
+    // Atualiza a tarefa no banco de dados
+    db.run("UPDATE tarefas SET tarefa = ? WHERE id = ?", [tarefa, id], function(err) {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -48,9 +63,17 @@ exports.updateTarefa = (req, res) => {
     });
 };
 
+// Deleta uma tarefa - Somente usuários com o papel 'admin' podem deletar tarefas
 exports.deleteTarefa = (req, res) => {
     const { id } = req.params;
-    db.run("DELETE FROM tarefas WHERE id = ?", [id], function (err) {
+
+    // Verifica se o usuário tem o papel de 'admin'
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem deletar tarefas.' });
+    }
+
+    // Remove a tarefa do banco de dados
+    db.run("DELETE FROM tarefas WHERE id = ?", [id], function(err) {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
